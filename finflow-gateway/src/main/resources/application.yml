@@ -1,6 +1,21 @@
 spring:
   application:
     name: finflow-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: finflow-income
+          uri: lb://finflow-income
+          predicates:
+            - Path=/api/income/**
+        - id: finflow-expense
+          uri: lb://finflow-expense
+          predicates:
+            - Path=/api/expenses/**
+        - id: finflow-reports
+          uri: lb://finflow-reports
+          predicates:
+            - Path=/api/reports/**
 
 server:
   port: 8080
@@ -10,3 +25,6 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 
+security:
+  jwt:
+    secret: minha-chave-super-secreta-minha-chave-super-secreta
