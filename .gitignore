@@ -30,3 +30,9 @@
 hs_err_pid*
 replay_pid*
 >>>>>>> 555b505229ca0394adf32e32d41adac8afb172a2
+
+target/
+.idea/
+.vscode/
+*.iml
+
