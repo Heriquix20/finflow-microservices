@@ -12,4 +12,3 @@ public class FinflowDiscoveryApplication {
         SpringApplication.run(FinflowDiscoveryApplication.class, args);
     }
 }
-
