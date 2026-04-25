@@ -13,6 +13,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.http.MediaType;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
@@ -22,8 +23,9 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
+    private static final String USER_ID_HEADER = "X-User-Id";
     private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/auth/**"
+            "/api/auth/login"
     );
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -64,7 +66,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
             ServerHttpRequest mutatedRequest = exchange.getRequest()
                     .mutate()
-                    .header("X-User-Id", userId)
+                    .header(USER_ID_HEADER, userId)
                     .build();
 
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
@@ -79,7 +81,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private Mono<Void> writeUnauthorizedResponse(ServerWebExchange exchange, String message) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-        byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        String payload = """
+                {"title":"Unauthorized","status":401,"detail":"%s"}
+                """.formatted(message.replace("\"", "\\\"")).trim();
+        byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
         return exchange.getResponse()
                 .writeWith(Mono.just(exchange.getResponse()
                         .bufferFactory()
