@@ -1,5 +1,6 @@
 # Maven build output
 target/
+.m2repo/
 
 # IDE files
 .idea/
