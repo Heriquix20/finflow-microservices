@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.logs
+.m2repo
+**/target
+**/node_modules
+**/.vite-cache
+finflow-frontend/dist
+docs/screenshots
