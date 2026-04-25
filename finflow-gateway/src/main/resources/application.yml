@@ -3,28 +3,58 @@ spring:
     name: finflow-gateway
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
       routes:
         - id: finflow-income
           uri: lb://finflow-income
           predicates:
-            - Path=/api/income/**
+            - Path=/api/incomes,/api/incomes/**
+          filters:
+            - RewritePath=/api/incomes?(?<segment>/?.*), /incomes${segment}
         - id: finflow-expense
           uri: lb://finflow-expense
           predicates:
-            - Path=/api/expenses/**
+            - Path=/api/expenses,/api/expenses/**
+          filters:
+            - RewritePath=/api/expenses(?<segment>/?.*), /expenses${segment}
         - id: finflow-reports
           uri: lb://finflow-reports
           predicates:
-            - Path=/api/reports/**
+            - Path=/api/reports,/api/reports/**
+          filters:
+            - RewritePath=/api/reports(?<segment>/?.*), /reports${segment}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
 
 security:
   jwt:
-    secret: minha-chave-super-secreta-minha-chave-super-secreta
+    secret: ${JWT_SECRET:minha-chave-super-secreta-minha-chave-super-secreta}
+
+app:
+  auth:
+    access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
+    users:
+      - user-id: user-123
+        username: demo
+        password: demo123
+        display-name: Demo User
+      - user-id: user-456
+        username: analyst
+        password: analyst123
+        display-name: Portfolio Analyst
