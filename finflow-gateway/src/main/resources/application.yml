@@ -4,6 +4,7 @@ spring:
   cloud:
     gateway:
       globalcors:
+        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
             allowedOrigins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
@@ -47,6 +48,8 @@ security:
     secret: ${JWT_SECRET:minha-chave-super-secreta-minha-chave-super-secreta}
 
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   auth:
     access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
     users:
