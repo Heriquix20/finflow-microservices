@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface IncomeRepository extends MongoRepository<Income, String> {
 
-    List<Income> findByUserId(String userId);
+    List<Income> findAllByUserIdOrderByDateDescCreatedAtDesc(String userId);
 
     Optional<Income> findByIdAndUserId(String id, String userId);
 }
