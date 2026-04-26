@@ -4,17 +4,23 @@ import com.finflow.income.dto.IncomeRequest;
 import com.finflow.income.dto.IncomeResponse;
 import com.finflow.income.service.IncomeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/incomes")
 public class IncomeController {
 
+    private static final String USER_ID_HEADER = "X-User-Id";
     private final IncomeService incomeService;
 
     public IncomeController(IncomeService incomeService) {
@@ -24,7 +30,7 @@ public class IncomeController {
     @PostMapping
     public ResponseEntity<IncomeResponse> createIncome(
             @Valid @RequestBody IncomeRequest request,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         IncomeResponse response = incomeService.createIncome(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -32,32 +38,32 @@ public class IncomeController {
 
     @GetMapping
     public ResponseEntity<List<IncomeResponse>> getAllIncomes(
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         return ResponseEntity.ok(incomeService.getAllIncomes(userId));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<IncomeResponse> getIncomeById(
-            @PathVariable String id,
-            @RequestHeader("X-User-Id") String userId
+            @PathVariable @NotBlank String id,
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         return ResponseEntity.ok(incomeService.getIncomeById(id, userId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<IncomeResponse> updateIncome(
-            @PathVariable String id,
+            @PathVariable @NotBlank String id,
             @Valid @RequestBody IncomeRequest request,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         return ResponseEntity.ok(incomeService.updateIncome(id, request, userId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIncome(
-            @PathVariable String id,
-            @RequestHeader("X-User-Id") String userId
+            @PathVariable @NotBlank String id,
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         incomeService.deleteIncome(id, userId);
         return ResponseEntity.noContent().build();
@@ -65,9 +71,9 @@ public class IncomeController {
 
     @GetMapping("/summary")
     public ResponseEntity<BigDecimal> getMonthlySummary(
-            @RequestParam int month,
-            @RequestParam int year,
-            @RequestHeader("X-User-Id") String userId
+            @RequestParam @Min(1) @Max(12) int month,
+            @RequestParam @Min(1) int year,
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
         return ResponseEntity.ok(incomeService.getMonthlySummary(month, year, userId));
     }
