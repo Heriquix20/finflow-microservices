@@ -49,6 +49,20 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void shouldSkipAuthenticationForRegisterPath() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/auth/register").build()
+        );
+
+        AtomicReference<ServerWebExchange> forwardedExchange = new AtomicReference<>();
+        GatewayFilterChain chain = chain(forwardedExchange);
+
+        filter.filter(exchange, chain).block();
+
+        assertThat(forwardedExchange.get()).isNotNull();
+    }
+
+    @Test
     void shouldReturnUnauthorizedWhenAuthorizationHeaderIsMissing() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/api/reports/balance").build()
@@ -107,6 +121,20 @@ class JwtAuthenticationFilterTest {
     @Test
     void shouldExposeExpectedOrder() {
         assertThat(filter.getOrder()).isEqualTo(-1);
+    }
+
+    @Test
+    void shouldAllowOptionsRequestsWithoutAuthentication() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.options("/api/reports/balance").build()
+        );
+
+        AtomicReference<ServerWebExchange> forwardedExchange = new AtomicReference<>();
+
+        filter.filter(exchange, chain(forwardedExchange)).block();
+
+        assertThat(forwardedExchange.get()).isNotNull();
+        assertThat(exchange.getResponse().getStatusCode()).isNull();
     }
 
     private GatewayFilterChain chain(AtomicReference<ServerWebExchange> forwardedExchange) {
