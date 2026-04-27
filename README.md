@@ -1,66 +1,72 @@
 ﻿# FinFlow
 
-Backend de gestÃ£o financeira construÃ­do com arquitetura de microsserviÃ§os para estudo avanÃ§ado de Java, Spring e sistemas distribuÃ­dos.
+Backend de gestão financeira construído com arquitetura de microsserviços para estudo avançado de Java, Spring Boot e sistemas distribuídos.
 
-O projeto foi pensado como uma base tÃ©cnica de portfÃ³lio para demonstrar:
+O projeto foi estruturado como uma base técnica de portfólio para demonstrar, de forma prática:
 
-- autenticaÃ§Ã£o com JWT
-- separaÃ§Ã£o de responsabilidades por serviÃ§o
-- comunicaÃ§Ã£o sÃ­ncrona e assÃ­ncrona
-- persistÃªncia orientada a documentos
+- autenticação com JWT
+- gateway como ponto único de entrada
+- separação de responsabilidades por serviço
+- comunicação síncrona com OpenFeign
+- comunicação assíncrona com Kafka
+- persistência orientada a documentos com MongoDB
 - testes automatizados com cobertura validada no build
-- execuÃ§Ã£o local e empacotamento com Docker
+- execução local e empacotamento com Docker
 
-## VisÃ£o geral
+## Visão geral
 
-O FinFlow representa o nÃºcleo backend de uma aplicaÃ§Ã£o financeira capaz de:
+O FinFlow representa o núcleo backend de uma aplicação financeira capaz de:
 
-- cadastrar usuÃ¡rios com e-mail e senha
-- autenticar sessÃµes via JWT
+- cadastrar usuários com e-mail e senha
+- autenticar sessões via JWT
 - registrar receitas
 - registrar despesas
 - consolidar saldo e indicadores financeiros
-- gerar relatÃ³rios por perÃ­odo e por categoria
+- gerar relatórios por período e por categoria
 
-O objetivo do projeto Ã© demonstrar como modelar um domÃ­nio financeiro simples em uma arquitetura distribuÃ­da, com foco em clareza estrutural, seguranÃ§a bÃ¡sica, testabilidade e evoluÃ§Ã£o incremental.
+O foco do projeto é mostrar como modelar um domínio financeiro simples em uma arquitetura distribuída, com atenção a clareza estrutural, testabilidade, segurança básica e evolução incremental.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    A["Cliente API"] --> B["Gateway (8080)"]
-    B --> C["Auth Service (8084)"]
-    B --> D["Income Service (8081)"]
-    B --> E["Expense Service (8082)"]
-    B --> F["Reports Service (8083)"]
-    C --> G["MongoDB"]
-    D --> G
-    E --> G
-    F --> G
-    D --> H["Kafka"]
-    E --> H
-    H --> F
-    F --> D
-    F --> E
-    B --> I["Eureka (8761)"]
-    C --> I
-    D --> I
-    E --> I
-    F --> I
+    Client["Cliente API"] --> Gateway["Gateway (8080)"]
+    Gateway --> Auth["Auth Service (8084)"]
+    Gateway --> Income["Income Service (8081)"]
+    Gateway --> Expense["Expense Service (8082)"]
+    Gateway --> Reports["Reports Service (8083)"]
+
+    Auth --> Mongo["MongoDB"]
+    Income --> Mongo
+    Expense --> Mongo
+    Reports --> Mongo
+
+    Income --> Kafka["Kafka"]
+    Expense --> Kafka
+    Kafka --> Reports
+
+    Reports --> Income
+    Reports --> Expense
+
+    Gateway --> Eureka["Eureka (8761)"]
+    Auth --> Eureka
+    Income --> Eureka
+    Expense --> Eureka
+    Reports --> Eureka
 ```
 
-## MÃ³dulos
+## Módulos
 
-| MÃ³dulo | Porta | Responsabilidade |
+| Módulo | Porta | Responsabilidade |
 | --- | --- | --- |
-| `finflow-discovery` | `8761` | Registro e descoberta de serviÃ§os com Eureka |
-| `finflow-auth` | `8084` | Cadastro, login por e-mail, emissÃ£o de JWT e recuperaÃ§Ã£o de perfil |
-| `finflow-gateway` | `8080` | Entrada Ãºnica, validaÃ§Ã£o do token e roteamento para os serviÃ§os internos |
-| `finflow-income` | `8081` | CRUD de receitas e publicaÃ§Ã£o de eventos |
-| `finflow-expense` | `8082` | CRUD de despesas e publicaÃ§Ã£o de eventos |
-| `finflow-reports` | `8083` | ConsolidaÃ§Ã£o financeira, histÃ³rico, saldo e agrupamentos |
+| `finflow-discovery` | `8761` | Registro e descoberta de serviços com Eureka |
+| `finflow-auth` | `8084` | Cadastro, login por e-mail, emissão de JWT e recuperação de perfil |
+| `finflow-gateway` | `8080` | Entrada única, validação do token e roteamento para os serviços internos |
+| `finflow-income` | `8081` | CRUD de receitas e publicação de eventos |
+| `finflow-expense` | `8082` | CRUD de despesas e publicação de eventos |
+| `finflow-reports` | `8083` | Consolidação financeira, histórico, saldo e agrupamentos |
 
-## Stack tÃ©cnica
+## Stack técnica
 
 - Java 21
 - Spring Boot 3.3.13
@@ -73,11 +79,11 @@ flowchart LR
 - Spring Validation
 - Spring Security Crypto
 - SpringDoc OpenAPI
-- Maven multi-mÃ³dulo
+- Maven multi-módulo
 - Docker Compose
 - MongoDB
-- Zookeeper
 - Kafka
+- Zookeeper
 - JUnit 5
 - Mockito
 - MockMvc
@@ -86,81 +92,83 @@ flowchart LR
 
 ## Principais funcionalidades
 
-### AutenticaÃ§Ã£o
+### Autenticação
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
-- cadastro de usuÃ¡rio com e-mail e senha
-- autenticaÃ§Ã£o stateless com JWT
-- propagaÃ§Ã£o do contexto autenticado para os serviÃ§os de domÃ­nio
+- cadastro de usuário com e-mail e senha
+- autenticação stateless com JWT
+- propagação do contexto autenticado para os serviços de domínio
 
 ### Receitas
 
-- criaÃ§Ã£o, listagem, atualizaÃ§Ã£o e remoÃ§Ã£o de receitas
-- consulta de resumo por mÃªs e ano
-- publicaÃ§Ã£o de eventos:
+- criação, listagem, atualização e remoção de receitas
+- filtros por categoria e intervalo de datas
+- endpoint paginado para consulta operacional
+- consulta de resumo por mês e ano
+- publicação de eventos:
   - `income.created`
   - `income.updated`
   - `income.deleted`
 
 ### Despesas
 
-- criaÃ§Ã£o, listagem, atualizaÃ§Ã£o e remoÃ§Ã£o de despesas
-- consulta de resumo por mÃªs e ano
-- publicaÃ§Ã£o de eventos:
+- criação, listagem, atualização e remoção de despesas
+- filtros por categoria e intervalo de datas
+- endpoint paginado para consulta operacional
+- consulta de resumo por mês e ano
+- publicação de eventos:
   - `expense.created`
   - `expense.updated`
   - `expense.deleted`
 
-### RelatÃ³rios
+### Relatórios
 
 - saldo consolidado
 - resumo mensal
 - despesas agrupadas por categoria
-- histÃ³rico consolidado por perÃ­odo
-- consolidaÃ§Ã£o acionada por eventos Kafka
+- histórico consolidado por período
+- consolidação acionada por eventos Kafka
 - leitura complementar via OpenFeign
 
-## Fluxo de autenticaÃ§Ã£o e sessÃ£o
+## Fluxo de autenticação e sessão
 
-1. o cliente registra uma conta com `POST /api/auth/register`
-2. o serviÃ§o de autenticaÃ§Ã£o retorna um `accessToken`
-3. o cliente envia `Authorization: Bearer <token>` nas rotas protegidas
-4. o gateway valida o token e propaga `X-User-Id` para os microsserviÃ§os internos
-5. o cliente pode consultar o perfil autenticado com `GET /api/auth/me`
+1. O cliente registra uma conta com `POST /api/auth/register`.
+2. O serviço de autenticação retorna um `accessToken`.
+3. O cliente envia `Authorization: Bearer <token>` nas rotas protegidas.
+4. O gateway valida o token e propaga `X-User-Id` para os microsserviços internos.
+5. O cliente pode consultar o perfil autenticado com `GET /api/auth/me`.
 
-A sessÃ£o Ã© stateless:
+A sessão é stateless:
 
 - o JWT representa a identidade autenticada
-- o gateway nÃ£o mantÃ©m sessÃ£o em memÃ³ria
-- os serviÃ§os internos recebem apenas o contexto necessÃ¡rio para autorizaÃ§Ã£o e segregaÃ§Ã£o de dados por usuÃ¡rio
+- o gateway não mantém sessão em memória
+- os serviços internos recebem apenas o contexto necessário para autorização e segregação de dados por usuário
 
-## Estrutura do repositÃ³rio
+## Estrutura do repositório
 
 ```text
 finflow/
-|-- .github/
-|-- docs/
-|-- finflow-discovery/
-|-- finflow-auth/
-|-- finflow-gateway/
-|-- finflow-income/
-|-- finflow-expense/
-|-- finflow-reports/
-|-- build-finflow.ps1
-|-- docker-compose.yml
-|-- docker-compose.app.yml
-|-- README.md
-|-- start-finflow.ps1
-|-- start-finflow-all.ps1
-|-- stop-finflow.ps1
-`-- stop-finflow-all.ps1
+├── .github/
+├── docs/
+├── finflow-discovery/
+├── finflow-auth/
+├── finflow-gateway/
+├── finflow-income/
+├── finflow-expense/
+├── finflow-reports/
+├── build-finflow.ps1
+├── docker-compose.yml
+├── docker-compose.app.yml
+├── README.md
+├── start-finflow.ps1
+└── stop-finflow.ps1
 ```
 
 ## Como executar
 
-### PrÃ©-requisitos
+### Pré-requisitos
 
 - Java 21
 - Maven
@@ -170,7 +178,7 @@ finflow/
 ### Subir a stack backend
 
 ```powershell
-.\start-finflow-all.ps1
+.\start-finflow.ps1
 ```
 
 Esse script:
@@ -186,7 +194,7 @@ Esse script:
 ### Parar a stack backend
 
 ```powershell
-.\stop-finflow-all.ps1
+.\stop-finflow.ps1
 ```
 
 ### Build completo
@@ -195,13 +203,13 @@ Esse script:
 .\build-finflow.ps1
 ```
 
-Para forÃ§ar limpeza antes:
+Para forçar limpeza antes:
 
 ```powershell
 .\build-finflow.ps1 -Clean
 ```
 
-### Comandos manuais Ãºteis
+### Execução manual rápida
 
 ```powershell
 docker compose up -d
@@ -216,7 +224,7 @@ docker compose -f docker-compose.app.yml up --build
 
 Guia complementar:
 
-- [docs/deployment/README.md](C:/Users/hcgv1/OneDrive/Ãrea%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/deployment/README.md)
+- [Deployment Guide](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/deployment/README.md)
 
 ## URLs locais
 
@@ -260,6 +268,7 @@ Exemplo de login:
 
 - `POST /api/incomes`
 - `GET /api/incomes`
+- `GET /api/incomes/paged?page=&size=&category=&startDate=&endDate=`
 - `GET /api/incomes/{id}`
 - `PUT /api/incomes/{id}`
 - `DELETE /api/incomes/{id}`
@@ -269,48 +278,109 @@ Exemplo de login:
 
 - `POST /api/expenses`
 - `GET /api/expenses`
+- `GET /api/expenses/paged?page=&size=&category=&startDate=&endDate=`
 - `GET /api/expenses/{id}`
 - `PUT /api/expenses/{id}`
 - `DELETE /api/expenses/{id}`
 - `GET /api/expenses/summary?month=&year=`
 
-### RelatÃ³rios
+### Relatórios
 
 - `GET /api/reports/monthly-summary?month=&year=`
 - `GET /api/reports/balance`
 - `GET /api/reports/by-category?month=&year=`
 - `GET /api/reports/history`
 
+## Padrão de erro
+
+Os serviços HTTP retornam erros padronizados com `ProblemDetail` enriquecido.
+
+Campos esperados:
+
+- `status`
+- `title`
+- `detail`
+- `errorCode`
+- `timestamp`
+- `path`
+- `errors` quando houver falha de validação
+
+Exemplo:
+
+```json
+{
+  "type": "https://finflow/errors/validation",
+  "title": "Validation failed.",
+  "status": 400,
+  "detail": "One or more request fields are invalid.",
+  "errorCode": "VALIDATION_ERROR",
+  "timestamp": "2026-04-27T15:30:00-03:00",
+  "path": "/incomes",
+  "errors": {
+    "description": "must not be blank"
+  }
+}
+```
+
+## Paginação e filtros
+
+Os serviços de receitas e despesas suportam:
+
+- filtro por `category`
+- filtro por `startDate`
+- filtro por `endDate`
+- paginação com `page` e `size`
+
+O endpoint paginado retorna:
+
+- `items`
+- `page`
+- `size`
+- `totalItems`
+- `totalPages`
+- `hasNext`
+- `hasPrevious`
+
 ## Qualidade e testes
 
 O projeto possui:
 
-- testes unitÃ¡rios de service
+- testes unitários de service
 - testes de controller
 - testes do `finflow-auth`
 - testes do filtro JWT no gateway
 - testes de producers e consumer
 - cobertura validada com JaCoCo no `mvn verify`
-- cenÃ¡rios BDD para fluxos crÃ­ticos
+- cenários BDD para fluxos críticos
 
-Cobertura bruta atual:
+O build principal é:
 
-- `finflow-auth`: `90.00%`
-- `finflow-gateway`: `96.61%`
-- `finflow-income`: `84.92%`
-- `finflow-expense`: `84.42%`
-- `finflow-reports`: `92.28%`
+```powershell
+mvn verify
+```
 
-DocumentaÃ§Ã£o complementar:
+O gate de cobertura está configurado para exigir, no build, pelo menos `80%` de cobertura de linhas no escopo considerado.
 
-- guia de testes: [docs/testing/README.md](C:/Users/hcgv1/OneDrive/Ãrea%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/README.md)
-- baseline de cobertura: [docs/testing/coverage-status.md](C:/Users/hcgv1/OneDrive/Ãrea%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/coverage-status.md)
-- cenÃ¡rios BDD: [docs/testing/bdd/README.md](C:/Users/hcgv1/OneDrive/Ãrea%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/bdd/README.md)
+Documentação complementar:
+
+- [Guia de testes](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/README.md)
+- [Baseline de cobertura](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/coverage-status.md)
+- [Cenários BDD](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/bdd/README.md)
 
 ## CI e deploy
 
 O projeto inclui:
 
-- workflow de CI em [`.github/workflows/ci.yml`](C:/Users/hcgv1/OneDrive/Ãrea%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/.github/workflows/ci.yml)
-- Dockerfiles por serviÃ§o backend
-- compose dedicado para a stack completa em contÃªineres
+- workflow de CI em [`.github/workflows/ci.yml`](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/.github/workflows/ci.yml)
+- Dockerfiles por serviço backend
+- compose dedicado para a stack completa em contêineres
+
+## Objetivo do projeto
+
+O FinFlow foi construído como projeto de estudo avançado e portfólio técnico, com foco em:
+
+- arquitetura de microsserviços no ecossistema Spring
+- autenticação e roteamento centralizado
+- integração entre serviços por HTTP e eventos
+- disciplina de testes e qualidade
+- organização de backend com cara de produto real

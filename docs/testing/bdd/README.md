@@ -28,13 +28,13 @@ Colecao de cenarios BDD do FinFlow em formato Gherkin.
 Antes de executar os cenarios:
 
 ```powershell
-.\start-finflow-all.ps1
+.\start-finflow.ps1
 ```
 
 Para parar tudo ao final:
 
 ```powershell
-.\stop-finflow-all.ps1
+.\stop-finflow.ps1
 ```
 
 ## Usuario de referencia

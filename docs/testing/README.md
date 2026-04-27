@@ -62,7 +62,7 @@ Eles funcionam como:
 
 Fluxo recomendado:
 
-1. subir o ambiente com `.\start-finflow-all.ps1`
+1. subir o ambiente com `.\start-finflow.ps1`
 2. garantir que os servicos backend respondem nas portas esperadas
 3. executar os cenarios por prioridade:
    - `@smoke`
