@@ -1,32 +1,28 @@
 # FinFlow
 
-Plataforma backend de gestao financeira construida para estudo avancado de microsservicos com Java e Spring.
+Backend de gestão financeira construído com arquitetura de microsserviços para estudo avançado de Java, Spring e sistemas distribuídos.
 
-O projeto demonstra, em um unico repositorio:
+O projeto foi pensado como uma base técnica de portfólio para demonstrar:
 
-- service discovery com Eureka
-- microsservico de autenticacao com cadastro e login por email
-- API Gateway com validacao JWT
-- servicos de dominio para receitas e despesas
-- comunicacao assincrona com Kafka
-- consolidacao de relatorios com MongoDB e OpenFeign
+- autenticação com JWT
+- separação de responsabilidades por serviço
+- comunicação síncrona e assíncrona
+- persistência orientada a documentos
 - testes automatizados com cobertura validada no build
-- CI e preparo de deploy com Docker
+- execução local e empacotamento com Docker
 
-## Visao geral
+## Visão geral
 
-O FinFlow representa o backend de uma aplicacao financeira capaz de registrar movimentacoes, autenticar usuarios e consolidar informacoes em uma arquitetura distribuida.
+O FinFlow representa o núcleo backend de uma aplicação financeira capaz de:
 
-Hoje o sistema permite:
+- cadastrar usuários com e-mail e senha
+- autenticar sessões via JWT
+- registrar receitas
+- registrar despesas
+- consolidar saldo e indicadores financeiros
+- gerar relatórios por período e por categoria
 
-- cadastrar conta com email e senha
-- autenticar e recuperar sessao via JWT
-- cadastrar receitas
-- cadastrar despesas
-- consultar saldo consolidado
-- consultar resumo mensal
-- visualizar despesas por categoria
-- acompanhar historico mensal consolidado
+O objetivo do projeto é demonstrar como modelar um domínio financeiro simples em uma arquitetura distribuída, com foco em clareza estrutural, segurança básica, testabilidade e evolução incremental.
 
 ## Arquitetura
 
@@ -53,18 +49,18 @@ flowchart LR
     F --> I
 ```
 
-## Modulos
+## Módulos
 
-| Modulo | Porta | Responsabilidade |
+| Módulo | Porta | Responsabilidade |
 | --- | --- | --- |
-| `finflow-discovery` | `8761` | Registro e descoberta de servicos |
-| `finflow-auth` | `8084` | Cadastro, login por email, emissao de JWT e perfil autenticado |
-| `finflow-gateway` | `8080` | Entrada unica, validacao JWT e roteamento |
-| `finflow-income` | `8081` | CRUD de receitas e publicacao de eventos |
-| `finflow-expense` | `8082` | CRUD de despesas e publicacao de eventos |
-| `finflow-reports` | `8083` | Consolidacao financeira e consultas de relatorio |
+| `finflow-discovery` | `8761` | Registro e descoberta de serviços com Eureka |
+| `finflow-auth` | `8084` | Cadastro, login por e-mail, emissão de JWT e recuperação de perfil |
+| `finflow-gateway` | `8080` | Entrada única, validação do token e roteamento para os serviços internos |
+| `finflow-income` | `8081` | CRUD de receitas e publicação de eventos |
+| `finflow-expense` | `8082` | CRUD de despesas e publicação de eventos |
+| `finflow-reports` | `8083` | Consolidação financeira, histórico, saldo e agrupamentos |
 
-## Stack tecnica
+## Stack técnica
 
 - Java 21
 - Spring Boot 3.3.13
@@ -77,7 +73,7 @@ flowchart LR
 - Spring Validation
 - Spring Security Crypto
 - SpringDoc OpenAPI
-- Maven multi-modulo
+- Maven multi-módulo
 - Docker Compose
 - MongoDB
 - Zookeeper
@@ -88,64 +84,59 @@ flowchart LR
 - JaCoCo
 - GitHub Actions
 
-## Funcionalidades
+## Principais funcionalidades
 
-### Auth
+### Autenticação
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
-- cadastro por email e senha
-- emissao de JWT
-- sessao stateless baseada em token
+- cadastro de usuário com e-mail e senha
+- autenticação stateless com JWT
+- propagação do contexto autenticado para os serviços de domínio
 
-### Gateway
+### Receitas
 
-- validacao de JWT
-- propagacao do `X-User-Id` para servicos internos
-- roteamento centralizado para `auth`, `income`, `expense` e `reports`
-
-### Income
-
-- criar, listar, atualizar e remover receitas
-- resumo por mes e ano
-- eventos:
+- criação, listagem, atualização e remoção de receitas
+- consulta de resumo por mês e ano
+- publicação de eventos:
   - `income.created`
   - `income.updated`
   - `income.deleted`
 
-### Expense
+### Despesas
 
-- criar, listar, atualizar e remover despesas
-- resumo por mes e ano
-- eventos:
+- criação, listagem, atualização e remoção de despesas
+- consulta de resumo por mês e ano
+- publicação de eventos:
   - `expense.created`
   - `expense.updated`
   - `expense.deleted`
 
-### Reports
+### Relatórios
 
 - saldo consolidado
 - resumo mensal
-- despesas por categoria
-- historico mensal
-- consolidacao por Kafka
-- leitura complementar via Feign
+- despesas agrupadas por categoria
+- histórico consolidado por período
+- consolidação acionada por eventos Kafka
+- leitura complementar via OpenFeign
 
-## Fluxo de autenticacao e sessao
+## Fluxo de autenticação e sessão
 
-1. cadastrar conta com `POST /api/auth/register`
-2. receber `accessToken`
-3. enviar `Authorization: Bearer <token>` nas rotas protegidas
-4. recuperar o perfil atual com `GET /api/auth/me`
+1. o cliente registra uma conta com `POST /api/auth/register`
+2. o serviço de autenticação retorna um `accessToken`
+3. o cliente envia `Authorization: Bearer <token>` nas rotas protegidas
+4. o gateway valida o token e propaga `X-User-Id` para os microsserviços internos
+5. o cliente pode consultar o perfil autenticado com `GET /api/auth/me`
 
-A sessao do usuario e stateless:
+A sessão é stateless:
 
-- o token JWT representa a sessao autenticada
-- o gateway valida o token e propaga `X-User-Id` para os servicos internos
-- nao existe armazenamento de sessao em memoria no gateway
+- o JWT representa a identidade autenticada
+- o gateway não mantém sessão em memória
+- os serviços internos recebem apenas o contexto necessário para autorização e segregação de dados por usuário
 
-## Estrutura do repositorio
+## Estrutura do repositório
 
 ```text
 finflow/
@@ -169,7 +160,7 @@ finflow/
 
 ## Como executar
 
-### Pre-requisitos
+### Pré-requisitos
 
 - Java 21
 - Maven
@@ -185,7 +176,12 @@ finflow/
 Esse script:
 
 - sobe MongoDB, Zookeeper e Kafka
-- sobe discovery, auth, gateway, income, expense e reports
+- inicia `finflow-discovery`
+- inicia `finflow-auth`
+- inicia `finflow-gateway`
+- inicia `finflow-income`
+- inicia `finflow-expense`
+- inicia `finflow-reports`
 
 ### Parar a stack backend
 
@@ -199,13 +195,13 @@ Esse script:
 .\build-finflow.ps1
 ```
 
-Para forcar limpeza antes:
+Para forçar limpeza antes:
 
 ```powershell
 .\build-finflow.ps1 -Clean
 ```
 
-### Comandos manuais uteis
+### Comandos manuais úteis
 
 ```powershell
 docker compose up -d
@@ -218,9 +214,9 @@ mvn verify
 docker compose -f docker-compose.app.yml up --build
 ```
 
-Guia de deploy:
+Guia complementar:
 
-- [docs/deployment/README.md](docs/deployment/README.md)
+- [docs/deployment/README.md](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/deployment/README.md)
 
 ## URLs locais
 
@@ -278,7 +274,7 @@ Exemplo de login:
 - `DELETE /api/expenses/{id}`
 - `GET /api/expenses/summary?month=&year=`
 
-### Relatorios
+### Relatórios
 
 - `GET /api/reports/monthly-summary?month=&year=`
 - `GET /api/reports/balance`
@@ -289,41 +285,52 @@ Exemplo de login:
 
 O projeto possui:
 
-- testes unitarios de services
-- testes de controllers
-- testes do auth service e do filtro JWT no gateway
+- testes unitários de service
+- testes de controller
+- testes do `finflow-auth`
+- testes do filtro JWT no gateway
 - testes de producers e consumer
 - cobertura validada com JaCoCo no `mvn verify`
-- roteiros BDD para fluxos criticos
+- cenários BDD para fluxos críticos
 
-Documentacao complementar:
+Cobertura bruta atual:
 
-- guia de testes: [docs/testing/README.md](docs/testing/README.md)
-- baseline de cobertura: [docs/testing/coverage-status.md](docs/testing/coverage-status.md)
-- cenarios BDD: [docs/testing/bdd/README.md](docs/testing/bdd/README.md)
+- `finflow-auth`: `90.00%`
+- `finflow-gateway`: `96.61%`
+- `finflow-income`: `84.92%`
+- `finflow-expense`: `84.42%`
+- `finflow-reports`: `92.28%`
+
+Documentação complementar:
+
+- guia de testes: [docs/testing/README.md](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/README.md)
+- baseline de cobertura: [docs/testing/coverage-status.md](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/coverage-status.md)
+- cenários BDD: [docs/testing/bdd/README.md](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/bdd/README.md)
 
 ## CI e deploy
 
 O projeto inclui:
 
-- workflow de CI em `.github/workflows/ci.yml`
-- Dockerfiles por servico backend
-- compose dedicado para a stack backend completa
+- workflow de CI em [`.github/workflows/ci.yml`](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/.github/workflows/ci.yml)
+- Dockerfiles por serviço backend
+- compose dedicado para a stack completa em contêineres
 
-## Limitacoes atuais
+## Limitações atuais
 
-- ainda nao existe refresh token
-- ainda nao existe recuperacao de senha, confirmacao de email ou revogacao de token
-- o ambiente local pode acumular dados no Mongo quando o mesmo usuario e reutilizado repetidamente
+- ainda não existe refresh token
+- ainda não existe recuperação de senha
+- ainda não existe confirmação de e-mail
+- ainda não existe revogação de token
+- o ambiente local pode acumular dados no MongoDB quando o mesmo usuário é reutilizado em muitos testes
 
-## Proximos passos
+## Próximos passos
 
 - adicionar Testcontainers
 - adicionar observabilidade
 - automatizar deploy em cloud
-- adicionar refresh token e revogacao
-- evoluir politicas de seguranca e identidade
+- adicionar refresh token e revogação
+- evoluir políticas de segurança e identidade
 
 ## Autor
 
-Projeto desenvolvido para estudo avancado de backend Java, microsservicos e portfolio tecnico.
+Projeto desenvolvido para estudo avançado de backend Java, microsserviços e portfólio técnico.
