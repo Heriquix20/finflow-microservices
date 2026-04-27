@@ -21,6 +21,7 @@
     <modules>
         <module>finflow-discovery</module>
         <module>finflow-gateway</module>
+        <module>finflow-auth</module>
         <module>finflow-income</module>
         <module>finflow-expense</module>
         <module>finflow-reports</module>
