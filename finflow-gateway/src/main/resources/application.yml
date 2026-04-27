@@ -7,7 +7,7 @@ spring:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowedOrigins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+            allowedOrigins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080}
             allowedMethods:
               - GET
               - POST
@@ -16,6 +16,12 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
       routes:
+        - id: finflow-auth
+          uri: lb://finflow-auth
+          predicates:
+            - Path=/api/auth,/api/auth/**
+          filters:
+            - RewritePath=/api/auth(?<segment>/?.*), /auth${segment}
         - id: finflow-income
           uri: lb://finflow-income
           predicates:
@@ -49,15 +55,4 @@ security:
 
 app:
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
-  auth:
-    access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
-    users:
-      - user-id: user-123
-        username: demo
-        password: demo123
-        display-name: Demo User
-      - user-id: user-456
-        username: analyst
-        password: analyst123
-        display-name: Portfolio Analyst
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080}

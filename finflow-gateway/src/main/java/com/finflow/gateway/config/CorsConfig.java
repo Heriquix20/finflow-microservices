@@ -16,7 +16,7 @@ public class CorsConfig {
 
     private final List<String> allowedOrigins;
 
-    public CorsConfig(@Value("${app.cors.allowed-origins:http://localhost:5173}") String[] allowedOrigins) {
+    public CorsConfig(@Value("${app.cors.allowed-origins:http://localhost:8080}") String[] allowedOrigins) {
         this.allowedOrigins = Arrays.asList(allowedOrigins);
     }
 
