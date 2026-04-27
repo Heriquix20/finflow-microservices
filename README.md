@@ -315,22 +315,5 @@ O projeto inclui:
 - Dockerfiles por serviço backend
 - compose dedicado para a stack completa em contêineres
 
-## Limitações atuais
 
-- ainda não existe refresh token
-- ainda não existe recuperação de senha
-- ainda não existe confirmação de e-mail
-- ainda não existe revogação de token
-- o ambiente local pode acumular dados no MongoDB quando o mesmo usuário é reutilizado em muitos testes
 
-## Próximos passos
-
-- adicionar Testcontainers
-- adicionar observabilidade
-- automatizar deploy em cloud
-- adicionar refresh token e revogação
-- evoluir políticas de segurança e identidade
-
-## Autor
-
-Projeto desenvolvido para estudo avançado de backend Java, microsserviços e portfólio técnico.
