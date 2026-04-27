@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: finflow-auth
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/finflow_auth}
+
+server:
+  port: ${SERVER_PORT:8084}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:minha-chave-super-secreta-minha-chave-super-secreta}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080}
+  auth:
+    access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:3600}
