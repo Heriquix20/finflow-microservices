@@ -13,6 +13,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $services = @(
+    @{ Name = "finflow-auth"; Module = "finflow-auth" },
     @{ Name = "finflow-gateway"; Module = "finflow-gateway" },
     @{ Name = "finflow-income"; Module = "finflow-income" },
     @{ Name = "finflow-expense"; Module = "finflow-expense" },

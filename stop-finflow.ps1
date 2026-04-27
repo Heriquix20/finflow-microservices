@@ -22,6 +22,7 @@ docker compose down
 
 Write-Host "Encerrando processos do backend..."
 Stop-ServiceByPort -Port 8761 -Name "finflow-discovery"
+Stop-ServiceByPort -Port 8084 -Name "finflow-auth"
 Stop-ServiceByPort -Port 8080 -Name "finflow-gateway"
 Stop-ServiceByPort -Port 8081 -Name "finflow-income"
 Stop-ServiceByPort -Port 8082 -Name "finflow-expense"
