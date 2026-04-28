@@ -4,7 +4,10 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,6 +70,42 @@ public class GlobalExceptionHandler {
                 ex.getReason(),
                 errorCode,
                 URI.create("https://finflow/errors/request"),
+                request
+        );
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ProblemDetail handleMethodNotSupportedException(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        return buildProblemDetail(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "HTTP method not allowed.",
+                ex.getMessage(),
+                "METHOD_NOT_ALLOWED",
+                URI.create("https://finflow/errors/method-not-allowed"),
+                request
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Malformed request body.",
+                "The request body is missing or invalid.",
+                "MALFORMED_REQUEST",
+                URI.create("https://finflow/errors/malformed-request"),
+                request
+        );
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ProblemDetail handleMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        return buildProblemDetail(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Unsupported media type.",
+                ex.getMessage(),
+                "UNSUPPORTED_MEDIA_TYPE",
+                URI.create("https://finflow/errors/unsupported-media-type"),
                 request
         );
     }

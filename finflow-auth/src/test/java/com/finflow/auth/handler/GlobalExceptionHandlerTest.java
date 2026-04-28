@@ -6,7 +6,10 @@ import jakarta.validation.Validation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.server.ResponseStatusException;
@@ -70,6 +73,45 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getStatus()).isEqualTo(400);
         assertThat(problemDetail.getProperties()).containsEntry("errorCode", "VALIDATION_ERROR");
         assertThat(problemDetail.getProperties()).containsKey("errors");
+    }
+
+    @Test
+    void shouldBuildMethodNotAllowedProblem() {
+        org.mockito.Mockito.when(request.getRequestURI()).thenReturn("/auth/login");
+        var problemDetail = handler.handleMethodNotSupportedException(
+                new HttpRequestMethodNotSupportedException("GET"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(405);
+        assertThat(problemDetail.getTitle()).isEqualTo("HTTP method not allowed.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "METHOD_NOT_ALLOWED");
+    }
+
+    @Test
+    void shouldBuildMalformedRequestProblem() {
+        org.mockito.Mockito.when(request.getRequestURI()).thenReturn("/auth/login");
+        var problemDetail = handler.handleMessageNotReadableException(
+                new HttpMessageNotReadableException("body missing"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(400);
+        assertThat(problemDetail.getTitle()).isEqualTo("Malformed request body.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "MALFORMED_REQUEST");
+    }
+
+    @Test
+    void shouldBuildUnsupportedMediaTypeProblem() {
+        org.mockito.Mockito.when(request.getRequestURI()).thenReturn("/auth/login");
+        var problemDetail = handler.handleMediaTypeNotSupportedException(
+                new HttpMediaTypeNotSupportedException("text/plain"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(415);
+        assertThat(problemDetail.getTitle()).isEqualTo("Unsupported media type.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "UNSUPPORTED_MEDIA_TYPE");
     }
 
     private static class SampleController {
