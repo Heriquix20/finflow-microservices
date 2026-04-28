@@ -1,6 +1,9 @@
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.7.8
+    image: finflow-zookeeper:7.7.8
+    build:
+      context: ./docker/infra/zookeeper
+      dockerfile: Dockerfile
     container_name: finflow-zookeeper
     restart: unless-stopped
     environment:
@@ -18,7 +21,10 @@ services:
       - finflow-network
 
   kafka:
-    image: confluentinc/cp-kafka:7.7.8
+    image: finflow-kafka:7.7.8
+    build:
+      context: ./docker/infra/kafka
+      dockerfile: Dockerfile
     container_name: finflow-kafka
     restart: unless-stopped
     depends_on:
@@ -47,7 +53,10 @@ services:
       - finflow-network
 
   mongo:
-    image: mongo:7.0
+    image: finflow-mongo:7.0
+    build:
+      context: ./docker/infra/mongo
+      dockerfile: Dockerfile
     container_name: finflow-mongo
     restart: unless-stopped
     ports:
