@@ -5,7 +5,7 @@ $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host "Subindo infraestrutura Docker..."
 Set-Location $projectRoot
-docker compose up -d
+docker compose up -d --build
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Nao foi possivel subir a infraestrutura Docker. Verifique se o Docker Desktop esta em execucao."
