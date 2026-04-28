@@ -82,10 +82,67 @@ class ExpenseServiceTest {
     void getAllExpensesShouldMapRepositoryResult() {
         when(expenseRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(expense));
 
-        List<ExpenseResponse> responses = expenseService.getAllExpenses("user-123");
+        List<ExpenseResponse> responses = expenseService.getAllExpenses("user-123", null, null, null);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getDescription()).isEqualTo("Rent");
+    }
+
+    @Test
+    void getAllExpensesShouldApplyCategoryAndDateFilters() {
+        Expense groceries = new Expense(
+                "expense-2",
+                "Groceries",
+                new BigDecimal("300.00"),
+                "Food",
+                LocalDate.of(2026, 5, 2),
+                "user-123",
+                LocalDateTime.now()
+        );
+
+        when(expenseRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(expense, groceries));
+
+        List<ExpenseResponse> responses = expenseService.getAllExpenses(
+                "user-123",
+                "Food",
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 31)
+        );
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst().getId()).isEqualTo("expense-2");
+    }
+
+    @Test
+    void getPagedExpensesShouldSliceFilteredResults() {
+        Expense second = new Expense(
+                "expense-2",
+                "Transport",
+                new BigDecimal("200.00"),
+                "Transport",
+                LocalDate.of(2026, 4, 20),
+                "user-123",
+                LocalDateTime.now()
+        );
+        Expense third = new Expense(
+                "expense-3",
+                "Food",
+                new BigDecimal("150.00"),
+                "Food",
+                LocalDate.of(2026, 4, 15),
+                "user-123",
+                LocalDateTime.now()
+        );
+
+        when(expenseRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(expense, second, third));
+
+        var page = expenseService.getPagedExpenses("user-123", 1, 2, null, null, null);
+
+        assertThat(page.getItems()).hasSize(1);
+        assertThat(page.getItems().getFirst().getId()).isEqualTo("expense-3");
+        assertThat(page.getTotalItems()).isEqualTo(3);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isHasPrevious()).isTrue();
     }
 
     @Test
@@ -147,5 +204,21 @@ class ExpenseServiceTest {
         BigDecimal result = expenseService.getMonthlySummary(4, 2026, "user-123");
 
         assertThat(result).isEqualByComparingTo("1800.00");
+    }
+
+    @Test
+    void getAllExpensesShouldRejectInvalidDateRange() {
+        assertThatThrownBy(() -> expenseService.getAllExpenses(
+                "user-123",
+                null,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 4, 1)
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> {
+                    ResponseStatusException responseStatusException = (ResponseStatusException) ex;
+                    assertThat(responseStatusException.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(responseStatusException.getReason()).isEqualTo("startDate must be before or equal to endDate.");
+                });
     }
 }

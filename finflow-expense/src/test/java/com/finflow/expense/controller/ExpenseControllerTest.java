@@ -2,6 +2,7 @@ package com.finflow.expense.controller;
 
 import com.finflow.expense.dto.ExpenseRequest;
 import com.finflow.expense.dto.ExpenseResponse;
+import com.finflow.expense.dto.PagedResponse;
 import com.finflow.expense.handler.GlobalExceptionHandler;
 import com.finflow.expense.service.ExpenseService;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +84,8 @@ class ExpenseControllerTest {
                         .content(payload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Validation failed."))
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.path").value("/expenses"))
                 .andExpect(jsonPath("$.errors.description").exists())
                 .andExpect(jsonPath("$.errors.amount").exists())
                 .andExpect(jsonPath("$.errors.category").exists())
@@ -91,11 +94,29 @@ class ExpenseControllerTest {
 
     @Test
     void getAllExpensesShouldReturnOk() throws Exception {
-        when(expenseService.getAllExpenses("user-123")).thenReturn(List.of(buildResponse()));
+        when(expenseService.getAllExpenses("user-123", null, null, null)).thenReturn(List.of(buildResponse()));
 
         mockMvc.perform(get("/expenses").header("X-User-Id", "user-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("expense-1"));
+    }
+
+    @Test
+    void getPagedExpensesShouldReturnPageMetadata() throws Exception {
+        when(expenseService.getPagedExpenses("user-123", 0, 2, "Housing", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 30)))
+                .thenReturn(new PagedResponse<>(List.of(buildResponse()), 0, 2, 1, 1, false, false));
+
+        mockMvc.perform(get("/expenses/paged")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("category", "Housing")
+                        .param("startDate", "2026-04-01")
+                        .param("endDate", "2026-04-30")
+                        .header("X-User-Id", "user-123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value("expense-1"))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
