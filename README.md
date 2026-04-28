@@ -190,6 +190,9 @@ Esse script:
 - inicia `finflow-income`
 - inicia `finflow-expense`
 - inicia `finflow-reports`
+- aguarda o Eureka responder
+- aguarda os serviços ficarem saudáveis
+- só retorna o controle quando a rota de autenticação já está disponível pelo gateway
 
 ### Parar a stack backend
 
@@ -224,7 +227,7 @@ docker compose -f docker-compose.app.yml up --build
 
 Guia complementar:
 
-- [Deployment Guide](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/deployment/README.md)
+- [Guia de deploy](docs/deployment/README.md)
 
 ## URLs locais
 
@@ -305,6 +308,16 @@ Campos esperados:
 - `path`
 - `errors` quando houver falha de validação
 
+Alguns `errorCode` relevantes:
+
+- `VALIDATION_ERROR`
+- `RESOURCE_NOT_FOUND`
+- `REQUEST_ERROR`
+- `METHOD_NOT_ALLOWED`
+- `MALFORMED_REQUEST`
+- `UNSUPPORTED_MEDIA_TYPE`
+- `INTERNAL_ERROR`
+
 Exemplo:
 
 ```json
@@ -341,6 +354,21 @@ O endpoint paginado retorna:
 - `hasNext`
 - `hasPrevious`
 
+## Validação funcional
+
+O fluxo principal foi validado localmente com a stack em execução:
+
+1. cadastro de usuário com `POST /api/auth/register`
+2. login com `POST /api/auth/login`
+3. consulta do perfil com `GET /api/auth/me`
+4. criação, consulta, atualização e remoção de receitas
+5. criação, consulta, atualização e remoção de despesas
+6. filtros por categoria e intervalo de datas
+7. paginação operacional em receitas e despesas
+8. consolidação assíncrona de relatórios por Kafka
+9. consultas de saldo, resumo mensal, histórico e agrupamento por categoria
+10. validação dos casos de erro mais importantes, como payload inválido, recurso inexistente e intervalo de datas inconsistente
+
 ## Qualidade e testes
 
 O projeto possui:
@@ -363,15 +391,15 @@ O gate de cobertura está configurado para exigir, no build, pelo menos `80%` de
 
 Documentação complementar:
 
-- [Guia de testes](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/README.md)
-- [Baseline de cobertura](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/coverage-status.md)
-- [Cenários BDD](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/docs/testing/bdd/README.md)
+- [Guia de testes](docs/testing/README.md)
+- [Baseline de cobertura](docs/testing/coverage-status.md)
+- [Cenários BDD](docs/testing/bdd/README.md)
 
 ## CI e deploy
 
 O projeto inclui:
 
-- workflow de CI em [`.github/workflows/ci.yml`](C:/Users/hcgv1/OneDrive/Área%20de%20Trabalho/Projetos%20-%20Henrique/finFLow/.github/workflows/ci.yml)
+- workflow de CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Dockerfiles por serviço backend
 - compose dedicado para a stack completa em contêineres
 
