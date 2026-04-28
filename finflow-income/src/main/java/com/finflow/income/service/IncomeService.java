@@ -2,6 +2,7 @@ package com.finflow.income.service;
 
 import com.finflow.income.dto.IncomeRequest;
 import com.finflow.income.dto.IncomeResponse;
+import com.finflow.income.dto.PagedResponse;
 import com.finflow.income.model.Income;
 import com.finflow.income.producer.IncomeEventProducer;
 import com.finflow.income.repository.IncomeRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,11 +38,35 @@ public class IncomeService {
         return toResponse(savedIncome);
     }
 
-    public List<IncomeResponse> getAllIncomes(String userId) {
-        return incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc(userId)
+    public List<IncomeResponse> getAllIncomes(String userId, String category, LocalDate startDate, LocalDate endDate) {
+        return filterIncomes(userId, category, startDate, endDate)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public PagedResponse<IncomeResponse> getPagedIncomes(
+            String userId,
+            int page,
+            int size,
+            String category,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        List<IncomeResponse> filteredItems = getAllIncomes(userId, category, startDate, endDate);
+        int fromIndex = Math.min(page * size, filteredItems.size());
+        int toIndex = Math.min(fromIndex + size, filteredItems.size());
+        int totalPages = filteredItems.isEmpty() ? 0 : (int) Math.ceil((double) filteredItems.size() / size);
+
+        return new PagedResponse<>(
+                filteredItems.subList(fromIndex, toIndex),
+                page,
+                size,
+                filteredItems.size(),
+                totalPages,
+                toIndex < filteredItems.size(),
+                page > 0
+        );
     }
 
     public IncomeResponse getIncomeById(String id, String userId) {
@@ -65,12 +91,29 @@ public class IncomeService {
     }
 
     public BigDecimal getMonthlySummary(int month, int year, String userId) {
-        return incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc(userId)
+        return filterIncomes(userId, null, null, null)
                 .stream()
                 .filter(income -> income.getDate() != null)
                 .filter(income -> income.getDate().getMonthValue() == month && income.getDate().getYear() == year)
                 .map(Income::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private List<Income> filterIncomes(String userId, String category, LocalDate startDate, LocalDate endDate) {
+        validateDateRange(startDate, endDate);
+
+        return incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc(userId)
+                .stream()
+                .filter(income -> category == null || category.isBlank() || category.equalsIgnoreCase(income.getCategory()))
+                .filter(income -> startDate == null || (income.getDate() != null && !income.getDate().isBefore(startDate)))
+                .filter(income -> endDate == null || (income.getDate() != null && !income.getDate().isAfter(endDate)))
+                .toList();
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate must be before or equal to endDate.");
+        }
     }
 
     private Income findIncomeByIdAndUserId(String id, String userId) {

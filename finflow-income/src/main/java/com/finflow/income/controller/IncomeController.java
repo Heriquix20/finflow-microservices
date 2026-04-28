@@ -2,6 +2,7 @@ package com.finflow.income.controller;
 
 import com.finflow.income.dto.IncomeRequest;
 import com.finflow.income.dto.IncomeResponse;
+import com.finflow.income.dto.PagedResponse;
 import com.finflow.income.service.IncomeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -9,10 +10,12 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Validated
@@ -38,9 +41,24 @@ public class IncomeController {
 
     @GetMapping
     public ResponseEntity<List<IncomeResponse>> getAllIncomes(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestHeader(USER_ID_HEADER) @NotBlank String userId
     ) {
-        return ResponseEntity.ok(incomeService.getAllIncomes(userId));
+        return ResponseEntity.ok(incomeService.getAllIncomes(userId, category, startDate, endDate));
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<PagedResponse<IncomeResponse>> getPagedIncomes(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestHeader(USER_ID_HEADER) @NotBlank String userId
+    ) {
+        return ResponseEntity.ok(incomeService.getPagedIncomes(userId, page, size, category, startDate, endDate));
     }
 
     @GetMapping("/{id}")
