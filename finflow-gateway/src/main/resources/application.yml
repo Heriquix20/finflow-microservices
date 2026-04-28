@@ -1,12 +1,58 @@
 spring:
   application:
     name: finflow-gateway
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        - id: finflow-auth
+          uri: lb://finflow-auth
+          predicates:
+            - Path=/api/auth,/api/auth/**
+          filters:
+            - RewritePath=/api/auth(?<segment>/?.*), /auth${segment}
+        - id: finflow-income
+          uri: lb://finflow-income
+          predicates:
+            - Path=/api/incomes,/api/incomes/**
+          filters:
+            - RewritePath=/api/incomes?(?<segment>/?.*), /incomes${segment}
+        - id: finflow-expense
+          uri: lb://finflow-expense
+          predicates:
+            - Path=/api/expenses,/api/expenses/**
+          filters:
+            - RewritePath=/api/expenses(?<segment>/?.*), /expenses${segment}
+        - id: finflow-reports
+          uri: lb://finflow-reports
+          predicates:
+            - Path=/api/reports,/api/reports/**
+          filters:
+            - RewritePath=/api/reports(?<segment>/?.*), /reports${segment}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:minha-chave-super-secreta-minha-chave-super-secreta}
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080}

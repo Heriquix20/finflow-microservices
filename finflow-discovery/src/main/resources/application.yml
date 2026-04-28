@@ -3,10 +3,9 @@ spring:
     name: finflow-discovery
 
 server:
-  port: 8761
+  port: ${SERVER_PORT:8761}
 
 eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
-

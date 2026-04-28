@@ -1,23 +1,25 @@
-<<<<<<< HEAD
-/target/
-/.idea/
-/.vscode/
+# Maven build output
+target/
+.m2repo/
+
+# IDE files
+.idea/
+.vscode/
 *.iml
 
-=======
-# Compiled class file
+# Compiled Java files
 *.class
 
-# Log file
+# Log files
 *.log
 
 # BlueJ files
 *.ctxt
 
-# Mobile Tools for Java (J2ME)
+# Mobile Tools for Java
 .mtj.tmp/
 
-# Package Files #
+# Packaged artifacts
 *.jar
 *.war
 *.nar
@@ -26,7 +28,6 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# JVM crash logs
 hs_err_pid*
 replay_pid*
->>>>>>> 555b505229ca0394adf32e32d41adac8afb172a2
