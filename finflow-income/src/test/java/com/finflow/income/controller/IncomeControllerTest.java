@@ -2,6 +2,7 @@ package com.finflow.income.controller;
 
 import com.finflow.income.dto.IncomeRequest;
 import com.finflow.income.dto.IncomeResponse;
+import com.finflow.income.dto.PagedResponse;
 import com.finflow.income.handler.GlobalExceptionHandler;
 import com.finflow.income.service.IncomeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,6 +86,8 @@ class IncomeControllerTest {
                         .content(payload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Validation failed."))
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.path").value("/incomes"))
                 .andExpect(jsonPath("$.errors.description").exists())
                 .andExpect(jsonPath("$.errors.amount").exists())
                 .andExpect(jsonPath("$.errors.category").exists())
@@ -93,11 +96,29 @@ class IncomeControllerTest {
 
     @Test
     void getAllIncomesShouldReturnOk() throws Exception {
-        when(incomeService.getAllIncomes("user-123")).thenReturn(List.of(buildResponse()));
+        when(incomeService.getAllIncomes("user-123", null, null, null)).thenReturn(List.of(buildResponse()));
 
         mockMvc.perform(get("/incomes").header("X-User-Id", "user-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("income-1"));
+    }
+
+    @Test
+    void getPagedIncomesShouldReturnPageMetadata() throws Exception {
+        when(incomeService.getPagedIncomes("user-123", 0, 2, "Salary", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 30)))
+                .thenReturn(new PagedResponse<>(List.of(buildResponse()), 0, 2, 1, 1, false, false));
+
+        mockMvc.perform(get("/incomes/paged")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("category", "Salary")
+                        .param("startDate", "2026-04-01")
+                        .param("endDate", "2026-04-30")
+                        .header("X-User-Id", "user-123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value("income-1"))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test

@@ -89,11 +89,68 @@ class IncomeServiceTest {
     void getAllIncomesShouldMapRepositoryResult() {
         when(incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(income));
 
-        List<IncomeResponse> responses = incomeService.getAllIncomes("user-123");
+        List<IncomeResponse> responses = incomeService.getAllIncomes("user-123", null, null, null);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getId()).isEqualTo("income-1");
         assertThat(responses.get(0).getAmount()).isEqualByComparingTo("5000.00");
+    }
+
+    @Test
+    void getAllIncomesShouldApplyCategoryAndDateFilters() {
+        Income freelance = new Income(
+                "income-2",
+                "Freelance",
+                new BigDecimal("1200.00"),
+                "Freelance",
+                LocalDate.of(2026, 5, 2),
+                "user-123",
+                LocalDateTime.now()
+        );
+
+        when(incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(income, freelance));
+
+        List<IncomeResponse> responses = incomeService.getAllIncomes(
+                "user-123",
+                "Freelance",
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 31)
+        );
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst().getId()).isEqualTo("income-2");
+    }
+
+    @Test
+    void getPagedIncomesShouldSliceFilteredResults() {
+        Income second = new Income(
+                "income-2",
+                "Bonus",
+                new BigDecimal("700.00"),
+                "Bonus",
+                LocalDate.of(2026, 4, 20),
+                "user-123",
+                LocalDateTime.now()
+        );
+        Income third = new Income(
+                "income-3",
+                "Freelance",
+                new BigDecimal("900.00"),
+                "Freelance",
+                LocalDate.of(2026, 4, 15),
+                "user-123",
+                LocalDateTime.now()
+        );
+
+        when(incomeRepository.findAllByUserIdOrderByDateDescCreatedAtDesc("user-123")).thenReturn(List.of(income, second, third));
+
+        var page = incomeService.getPagedIncomes("user-123", 1, 2, null, null, null);
+
+        assertThat(page.getItems()).hasSize(1);
+        assertThat(page.getItems().getFirst().getId()).isEqualTo("income-3");
+        assertThat(page.getTotalItems()).isEqualTo(3);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isHasPrevious()).isTrue();
     }
 
     @Test
@@ -167,5 +224,21 @@ class IncomeServiceTest {
         BigDecimal result = incomeService.getMonthlySummary(4, 2026, "user-123");
 
         assertThat(result).isEqualByComparingTo("5000.00");
+    }
+
+    @Test
+    void getAllIncomesShouldRejectInvalidDateRange() {
+        assertThatThrownBy(() -> incomeService.getAllIncomes(
+                "user-123",
+                null,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 4, 1)
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> {
+                    ResponseStatusException responseStatusException = (ResponseStatusException) ex;
+                    assertThat(responseStatusException.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(responseStatusException.getReason()).isEqualTo("startDate must be before or equal to endDate.");
+                });
     }
 }
