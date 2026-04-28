@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
@@ -64,5 +67,44 @@ class GlobalExceptionHandlerTest {
         assertThat(problemDetail.getTitle()).isEqualTo("Internal server error.");
         assertThat(problemDetail.getDetail()).isEqualTo("An unexpected error occurred.");
         assertThat(problemDetail.getProperties()).containsEntry("errorCode", "INTERNAL_ERROR");
+    }
+
+    @Test
+    void handleMethodNotSupportedExceptionShouldReturnMethodNotAllowedProblem() {
+        when(request.getRequestURI()).thenReturn("/expenses");
+        ProblemDetail problemDetail = handler.handleMethodNotSupportedException(
+                new HttpRequestMethodNotSupportedException("PATCH"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("HTTP method not allowed.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "METHOD_NOT_ALLOWED");
+    }
+
+    @Test
+    void handleMessageNotReadableExceptionShouldReturnMalformedRequestProblem() {
+        when(request.getRequestURI()).thenReturn("/expenses");
+        ProblemDetail problemDetail = handler.handleMessageNotReadableException(
+                new HttpMessageNotReadableException("body missing"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("Malformed request body.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "MALFORMED_REQUEST");
+    }
+
+    @Test
+    void handleMediaTypeNotSupportedExceptionShouldReturnUnsupportedMediaTypeProblem() {
+        when(request.getRequestURI()).thenReturn("/expenses");
+        ProblemDetail problemDetail = handler.handleMediaTypeNotSupportedException(
+                new HttpMediaTypeNotSupportedException("text/plain"),
+                request
+        );
+
+        assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
+        assertThat(problemDetail.getTitle()).isEqualTo("Unsupported media type.");
+        assertThat(problemDetail.getProperties()).containsEntry("errorCode", "UNSUPPORTED_MEDIA_TYPE");
     }
 }
